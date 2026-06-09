@@ -23,6 +23,8 @@ import AlertsCenter from './components/AlertsCenter.js';
 import AnalyticsView from './components/AnalyticsView.js';
 import UserManagement from './components/UserManagement.js';
 import SettingsView from './components/SettingsView.js';
+import DocumentsView from './components/DocumentsView.js';
+import { secureFetch, getBackendUrl } from './utils/api.js';
 
 export default function App() {
   // Authentication states
@@ -56,7 +58,7 @@ export default function App() {
   // Verify active JWT and load user context
   const verifyMe = async (activeToken: string) => {
     try {
-      const res = await fetch('/api/auth/me', {
+      const res = await secureFetch('/api/auth/me', {
         headers: {
           'Authorization': `Bearer ${activeToken}`
         }
@@ -90,21 +92,21 @@ export default function App() {
       const headers = { 'Authorization': `Bearer ${token}` };
 
       // Dashboard Stats
-      const statsRes = await fetch('/api/dashboard/stats', { headers });
+      const statsRes = await secureFetch('/api/dashboard/stats', { headers });
       if (statsRes.ok) {
         const sData = await statsRes.json();
         setStats(sData);
       }
 
       // Initial Events
-      const eventsRes = await fetch('/api/events?limit=200', { headers });
+      const eventsRes = await secureFetch('/api/events?limit=200', { headers });
       if (eventsRes.ok) {
         const eData = await eventsRes.json();
         setEvents(eData.reverse()); // Put newest last for standard chronological feed order
       }
 
       // Initial Anomalies
-      const anomsRes = await fetch('/api/anomalies', { headers });
+      const anomsRes = await secureFetch('/api/anomalies', { headers });
       if (anomsRes.ok) {
         const aData = await anomsRes.json();
         setAnomalies(aData);
@@ -125,7 +127,8 @@ export default function App() {
     if (!token || !currentUser) return;
 
     // Secure authentication parameters passed in URL query
-    const sse = new EventSource(`/api/stream/live?token=${token}`);
+    const backend = getBackendUrl();
+    const sse = new EventSource(`${backend}/api/stream/live?token=${token}`);
 
     sse.addEventListener('metric_event', (e: any) => {
       const newEvent = JSON.parse(e.data) as StreamEvent;
@@ -179,7 +182,7 @@ export default function App() {
     const action = streamRunning ? 'pause' : 'start';
     
     try {
-      const res = await fetch('/api/simulation/control', {
+      const res = await secureFetch('/api/simulation/control', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,11 +201,11 @@ export default function App() {
     }
   };
 
-  const handleUpdateSettings = async (speed: number, sensitivity: number) => {
+  const handleUpdateSettings = async (speed: number, sensitivity: number, manualModeOnly?: boolean) => {
     if (!token || currentUser?.role === 'Viewer') return;
 
     try {
-      const res = await fetch('/api/simulation/control', {
+      const res = await secureFetch('/api/simulation/control', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -210,7 +213,8 @@ export default function App() {
         },
         body: JSON.stringify({
           streamSpeed: speed,
-          sensitivityZ: sensitivity
+          sensitivityZ: sensitivity,
+          manualModeOnly: manualModeOnly
         })
       });
       if (res.ok) {
@@ -224,11 +228,36 @@ export default function App() {
     }
   };
 
+  const handleRegisterMetric = async (metricType: MetricType, value: number) => {
+    if (!token || currentUser?.role === 'Viewer') return { success: false, error: 'Viewer privileges cannot register data.' };
+
+    try {
+      const res = await secureFetch('/api/events/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ metricType, value })
+      });
+      if (res.ok) {
+        fetchBaseData();
+        return { success: true };
+      } else {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Registration failed.' };
+      }
+    } catch (err) {
+      console.error('Error registering telemetry metric:', err);
+      return { success: false, error: 'Network communication failure.' };
+    }
+  };
+
   const handleInjectAnomaly = async (metricType: MetricType, type: 'spike' | 'drop' | 'drift' | 'burst', multiplier: number) => {
     if (!token || currentUser?.role === 'Viewer') return;
 
     try {
-      await fetch('/api/simulation/inject', {
+      await secureFetch('/api/simulation/inject', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -245,7 +274,7 @@ export default function App() {
     if (!token || currentUser?.role === 'Viewer') return;
 
     try {
-      const res = await fetch(`/api/anomalies/${id}/status`, {
+      const res = await secureFetch(`/api/anomalies/${id}/status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -265,7 +294,7 @@ export default function App() {
     if (!token || currentUser?.role !== 'Admin') return;
 
     try {
-      const res = await fetch('/api/system/reset', {
+      const res = await secureFetch('/api/system/reset', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -288,7 +317,7 @@ export default function App() {
     const activeToken = localStorage.getItem('anomaly_secure_token');
     if (activeToken) {
       try {
-        await fetch('/api/auth/logout', {
+        await secureFetch('/api/auth/logout', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${activeToken}` }
         });
@@ -330,6 +359,9 @@ export default function App() {
             recentAnomalies={anomalies}
             events={events}
             onInjectAnomaly={handleInjectAnomaly}
+            settings={settings}
+            onRegisterMetric={handleRegisterMetric}
+            onUpdateSimulationSettings={handleUpdateSettings}
           />
         );
       case 'monitor':
@@ -370,6 +402,8 @@ export default function App() {
             geminiApiKeyConfigured={true}
           />
         );
+      case 'documents':
+        return <DocumentsView token={token} />;
       case 'users':
         return <UserManagement currentUser={currentUser} />;
       case 'security':
@@ -385,7 +419,7 @@ export default function App() {
         );
       default:
         return (
-          <div className="flex-1 p-6 flex flex-col items-center justify-center bg-slate-950 text-slate-500 font-mono text-xs">
+          <div className="flex-1 p-6 flex flex-col items-center justify-center bg-[#f8fafc] text-slate-400 font-sans text-xs">
             Operational dashboard placeholder.
           </div>
         );
@@ -393,7 +427,7 @@ export default function App() {
   };
 
   return (
-    <div id="applet-viewport" className="min-h-screen bg-slate-950 text-slate-100 flex overflow-hidden">
+    <div id="applet-viewport" className="min-h-screen bg-[#f8fafc] text-slate-800 flex overflow-hidden">
       
       {/* Sidebar Panel Navigation */}
       <Sidebar 
@@ -405,18 +439,18 @@ export default function App() {
       />
 
       {/* Main viewport area */}
-      <main id="viewport-pane" className="flex-1 flex flex-col relative overflow-hidden bg-slate-950">
+      <main id="viewport-pane" className="flex-1 flex flex-col relative overflow-hidden bg-[#f8fafc]">
         
         {/* Dynamic global warning banner if active system critical threat exists */}
         {anomalies.some(a => a.status === 'Active' && a.severity === 'Critical') && (
-          <div className="bg-red-950/80 border-b border-red-500/20 px-4 py-2 flex items-center justify-between text-xs text-red-500 font-mono animate-pulse-warning">
-            <span className="font-bold flex items-center gap-1.5 uppercase select-none">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
-              Warning: Active Critical cluster anomalies detected. Immediate triage recommended.
+          <div className="bg-red-50 border-b border-red-200 px-4 py-2.5 flex items-center justify-between text-xs text-red-700 animate-none">
+            <span className="font-semibold flex items-center gap-1.5 select-none">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+              Attention: Active critical thresholds reached on monitored services. Immediate review recommended.
             </span>
             <button 
               onClick={() => setCurrentTab('alerts')}
-              className="px-2 py-0.5 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[10px] uppercase duration-150 cursor-pointer"
+              className="px-2.5 py-1 rounded bg-[#ef4444] hover:bg-red-600 text-white font-semibold text-[11px] duration-150 cursor-pointer shadow-sm"
             >
               Open Alerts Center
             </button>

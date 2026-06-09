@@ -4,13 +4,13 @@
  */
 
 import { useState } from 'react';
-import { Sliders, Shield, BookOpen, Trash2, Key, Server, Cpu, Database, Info } from 'lucide-react';
+import { Sliders, BookOpen, Trash2, Cpu, Database, Info } from 'lucide-react';
 import { User, SystemSettings } from '../types.js';
 
 interface SettingsProps {
   currentUser: User;
   settings: SystemSettings;
-  onUpdateSimulationSettings: (speed: number, sensitivity: number) => void;
+  onUpdateSimulationSettings: (speed: number, sensitivity: number, manualModeOnly?: boolean) => void;
   onResetDatabase: () => void;
 }
 
@@ -23,45 +23,46 @@ export default function SettingsView({
   const [sensitivityZ, setSensitivityZ] = useState<number>(settings.detectionSensitiveZScore);
   const [rollingWindow, setRollingWindow] = useState<number>(settings.rollingWindowSize);
   const [speedInterval, setSpeedInterval] = useState<number>(settings.streamIntervalMs);
+  const [manualModeOnly, setManualModeOnly] = useState<boolean>(settings.manualModeOnly || false);
   const [actionStatus, setActionStatus] = useState<string>('');
 
   const handleSaveSettings = () => {
     if (currentUser.role === 'Viewer') {
-      alert('Security Policy Error: Viewers do not have roles permission to modify system constants.');
+      alert('Access Denied: Viewers do not have permission to modify system settings.');
       return;
     }
     if (sensitivityZ < 1.5 || sensitivityZ > 8.0) {
-      alert('Sensitivity standard coefficient must be inside [1.5, 8.0].');
+      alert('Sensitivity coefficient must operate inside standard [1.5, 8.0] values.');
       return;
     }
-    onUpdateSimulationSettings(speedInterval, sensitivityZ);
-    setActionStatus('System settings synchronized successfully.');
+    onUpdateSimulationSettings(speedInterval, sensitivityZ, manualModeOnly);
+    setActionStatus('System settings updated successfully.');
     setTimeout(() => setActionStatus(''), 4000);
   };
 
   const handleWipeData = () => {
     if (currentUser.role !== 'Admin') {
-      alert('Forbidden: Master wipes can only be executed by Chief Administrators.');
+      alert('Forbidden: Data resets are restricted exclusively to administrators.');
       return;
     }
-    if (confirm('Are you absolutely sure you want to perform a hard data purge? Historical metrics and logs will be permanently deleted.')) {
+    if (confirm('Are you sure you want to permanently clear historical telemetry logs and reset baseline metrics?')) {
       onResetDatabase();
-      setActionStatus('Historical data buffers purged completely.');
+      setActionStatus('Historical data registers cleared completely.');
       setTimeout(() => setActionStatus(''), 4000);
     }
   };
 
   return (
-    <div id="settings-view-container" className="flex-1 p-6 overflow-y-auto bg-slate-950 font-sans flex flex-col space-y-6">
+    <div id="settings-view-container" className="flex-1 p-6 overflow-y-auto bg-[#f8fafc] font-sans flex flex-col space-y-6">
       
       {/* Title */}
-      <div className="border-b border-slate-900 pb-5">
-        <h2 className="text-xl font-bold tracking-tight text-white flex items-center space-x-2.5">
-          <Sliders className="w-5 h-5 text-indigo-400" />
+      <div className="border-b border-gray-200 pb-5">
+        <h2 className="text-xl font-bold tracking-tight text-slate-800 flex items-center space-x-2.5">
+          <Sliders className="w-5 h-5 text-indigo-650" />
           <span>System Settings</span>
         </h2>
-        <p className="text-xs text-slate-400 mt-1">
-          Adjust statistical anomaly coefficients, review database security policies, and browse detection equations.
+        <p className="text-xs text-slate-500 mt-1">
+          Configure statistical anomaly Z-score coefficients, perform buffer resets, and review forensic detection formulas.
         </p>
       </div>
 
@@ -71,14 +72,14 @@ export default function SettingsView({
         <div className="space-y-6">
           
           {/* Statistical coefficients */}
-          <div className="bg-slate-900 border border-slate-850 p-5 rounded-lg space-y-4">
-            <h3 className="text-xs font-bold font-mono tracking-wider text-slate-100 uppercase border-b border-slate-850 pb-2 flex items-center space-x-2">
-              <Cpu className="w-4 h-4 text-indigo-400" />
-              <span>STATISTICAL CO-EFFICIENT ADJUSTERS</span>
+          <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-slate-805 uppercase border-b border-gray-100 pb-2 flex items-center space-x-2">
+              <Cpu className="w-4 h-4 text-indigo-650" />
+              <span>Statistical Anomaly Coefficients</span>
             </h3>
 
             {actionStatus && (
-              <div className="p-2.5 bg-emerald-900/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono rounded animate-pulse text-center">
+              <div className="p-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold rounded-lg text-center animate-pulse">
                 {actionStatus}
               </div>
             )}
@@ -86,9 +87,9 @@ export default function SettingsView({
             <div className="space-y-4">
               
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center text-[10px] font-mono select-none">
-                  <label className="text-slate-400 font-bold uppercase">Anomaly Z-Score Threshold: {sensitivityZ} σ</label>
-                  <span className="text-slate-500">Normal Range: 2.5 - 3.5</span>
+                <div className="flex justify-between items-center text-[11px] font-bold text-slate-600 select-none">
+                  <label className="uppercase">Anomaly Sensitivity: {sensitivityZ} Z-score Std Dev</label>
+                  <span className="text-slate-400">Normal Bounds: 2.5 - 3.5</span>
                 </div>
                 <input
                   id="range-settings-sensitivity"
@@ -99,15 +100,15 @@ export default function SettingsView({
                   value={sensitivityZ}
                   onChange={(e) => setSensitivityZ(parseFloat(e.target.value))}
                   disabled={currentUser.role === 'Viewer'}
-                  className="w-full accent-red-500 bg-slate-950 h-1 rounded cursor-pointer"
+                  className="w-full accent-indigo-600 bg-gray-100 h-1 rounded cursor-pointer mt-1"
                 />
-                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                  Lower limits increase alerts sensitivity (more false positives). High values limit triggers to massive spikes.
+                <p className="text-[11px] text-slate-450 leading-relaxed mt-1">
+                  Lower coefficients increase sensitivity to detect alerts (more false positives). Higher coefficients require massive spikes to trigger alarms.
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-400 font-bold uppercase font-mono block">Sliding History Sample Window</label>
+                <label className="text-[11px] font-bold text-slate-600 uppercase block">Rolling History Window Buffer</label>
                 <input
                   id="num-settings-window"
                   type="number"
@@ -115,16 +116,16 @@ export default function SettingsView({
                   max="150"
                   value={rollingWindow}
                   onChange={(e) => setRollingWindow(parseInt(e.target.value) || 50)}
-                  disabled={true} // Fixed for model consistency
-                  className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs text-slate-400 font-mono focus:outline-none focus:border-red-500 opacity-60"
+                  disabled={true} 
+                  className="w-full bg-slate-50 border border-gray-200 rounded-lg p-2 text-xs text-slate-405 font-medium opacity-70"
                 />
-                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                  Size of previous events sample to compute baseline Mean (μ) and Standard Deviation (σ). (LOCKED: {settings.rollingWindowSize} logs)
+                <p className="text-[11px] text-slate-450 leading-relaxed mt-1">
+                  The number of past records computed to establish baseline Mean (μ) and Standard Deviation (σ). (LOCKED: {settings.rollingWindowSize} logs)
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-400 font-bold uppercase font-mono block">Streaming Ingestion Interval (ms)</label>
+                <label className="text-[11px] font-bold text-slate-600 uppercase block">Ingestion Ingress rate (ms)</label>
                 <input
                   id="num-settings-speed"
                   type="number"
@@ -133,10 +134,45 @@ export default function SettingsView({
                   value={speedInterval}
                   onChange={(e) => setSpeedInterval(parseInt(e.target.value) || 1000)}
                   disabled={currentUser.role === 'Viewer'}
-                  className="w-full bg-slate-950 border border-slate-800 rounded p-2 text-xs text-slate-200 font-mono focus:outline-none focus:border-red-500"
+                  className="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs text-slate-800"
                 />
-                <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                  Simulated telemetry generation tick rate. Lower values speed up incoming logs (e.g., 200ms).
+                <p className="text-[11px] text-slate-450 leading-relaxed mt-1">
+                  The local simulated data stream tick rate. Lower values speed up simulated incoming telemetry cycles.
+                </p>
+              </div>
+
+              <div className="space-y-1.5 border-t border-gray-100 pt-3 mt-3">
+                <label className="text-[11px] font-bold text-slate-600 uppercase block">Telemetry Generation Source</label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <button
+                    id="btn-settings-mode-manual"
+                    type="button"
+                    onClick={() => setManualModeOnly(true)}
+                    disabled={currentUser.role === 'Viewer'}
+                    className={`py-2 px-3 text-xs font-semibold rounded-lg border cursor-pointer duration-150 ${
+                      manualModeOnly
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold shadow-xs animate-none'
+                        : 'bg-white border-gray-200 hover:bg-slate-50 text-slate-650'
+                    }`}
+                  >
+                    Operator Manual Only
+                  </button>
+                  <button
+                    id="btn-settings-mode-auto"
+                    type="button"
+                    onClick={() => setManualModeOnly(false)}
+                    disabled={currentUser.role === 'Viewer'}
+                    className={`py-2 px-3 text-xs font-semibold rounded-lg border cursor-pointer duration-150 ${
+                      !manualModeOnly
+                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-bold shadow-xs animate-none'
+                        : 'bg-white border-gray-200 hover:bg-slate-50 text-slate-655'
+                    }`}
+                  >
+                    Continuous Simulation
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-normal mt-1 leading-relaxed">
+                  In <strong>Operator Manual Only</strong> mode, continuous background data ticks are strictly blocked. Baseline thresholds and system lines remain completely frozen until registered manually.
                 </p>
               </div>
 
@@ -144,9 +180,9 @@ export default function SettingsView({
                 id="btn-settings-save"
                 onClick={handleSaveSettings}
                 disabled={currentUser.role === 'Viewer'}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded duration-150 cursor-pointer uppercase font-mono tracking-wide mt-2"
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg duration-150 cursor-pointer uppercase shadow-sm mt-3"
               >
-                Sync constants state
+                Sync Operational Parameters
               </button>
 
             </div>
@@ -154,27 +190,27 @@ export default function SettingsView({
           </div>
 
           {/* Database management and hard purging */}
-          <div className="bg-slate-900 border border-slate-850 p-5 rounded-lg space-y-4">
-            <h3 className="text-xs font-bold font-mono tracking-wider text-slate-100 uppercase border-b border-slate-850 pb-2 flex items-center space-x-2">
-              <Database className="w-4 h-4 text-red-500" />
-              <span>ADMIN DATA PURGES / HARD WIPINGS</span>
+          <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-red-700 uppercase border-b border-gray-100 pb-2 flex items-center space-x-2">
+              <Database className="w-4 h-4 text-red-550" />
+              <span>Administrative Purges</span>
             </h3>
 
-            <p className="text-xs text-slate-400">
-              Clear all historical tracking anomaly logs and stream telemetry buffers. This reverts the monitoring console back to normal, fresh baselines.
+            <p className="text-xs text-slate-500 leading-normal">
+              Permanently clear all logged historical deviations, baseline tracks, and active dashboard alerts lists.
             </p>
 
             <button
               id="btn-settings-wipe-data"
               onClick={handleWipeData}
               disabled={currentUser.role !== 'Admin'}
-              className="px-4 py-2 bg-red-950/30 hover:bg-red-900/30 text-red-400 border border-red-500/15 hover:border-red-500/30 font-bold text-xs rounded duration-150 cursor-pointer uppercase select-none w-full"
+              className="px-4 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 font-semibold text-xs rounded-lg duration-150 cursor-pointer uppercase select-none w-full shadow-sm"
             >
-              <Trash2 className="w-4 h-4 inline mr-1.5 text-red-400" />
-              <span>Hard Purge Historical logs</span>
+              <Trash2 className="w-4 h-4 inline mr-1.5 text-red-500" />
+              <span>Hard Purge System Telemetry</span>
             </button>
-            <p className="text-[10px] text-slate-500 font-mono text-center">
-              * This is a critical security action and requires **Admin** account authority signature logs.
+            <p className="text-[10px] text-slate-400 text-center font-bold">
+              * This is a critical security action and requires Admin privileges.
             </p>
           </div>
 
@@ -184,40 +220,40 @@ export default function SettingsView({
         <div className="space-y-6">
           
           {/* Rule documentation */}
-          <div className="bg-slate-900 border border-slate-850 p-5 rounded-lg space-y-4">
-            <h3 className="text-xs font-bold font-mono tracking-wider text-slate-100 uppercase border-b border-slate-850 pb-2 flex items-center space-x-2">
-              <BookOpen className="w-4 h-4 text-emerald-400" />
-              <span>DETECTION EQUATION MATHEMATICS SOP SHEET</span>
+          <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-slate-805 uppercase border-b border-gray-100 pb-2 flex items-center space-x-2">
+              <BookOpen className="w-4 h-4 text-emerald-600" />
+              <span>Detection Mathematics Refresher</span>
             </h3>
 
-            <div className="space-y-4 font-mono text-xs text-slate-400 leading-relaxed">
+            <div className="space-y-4 text-xs text-slate-600 leading-relaxed">
               
               <div>
-                <h4 className="text-xs font-bold text-slate-200 border-l-2 border-indigo-500 pl-2 uppercase">1. Z-Score Formulation</h4>
-                <div className="bg-slate-950 border border-slate-900 p-2.5 rounded-md text-slate-350 select-all my-1.5 flex justify-center text-sm font-bold">
+                <h4 className="text-xs font-bold text-slate-800 border-l-2 border-indigo-650 pl-2 uppercase">1. Z-Score Deviation equation</h4>
+                <div className="bg-slate-50 border border-gray-150 p-2.5 rounded-lg text-slate-700 select-all my-1.5 flex justify-center text-sm font-semibold font-mono">
                   Z = | x - μ | / σ
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Where <span className="font-bold text-slate-300">x</span> is the latest telemetry value, <span className="font-bold text-slate-300">μ (mean)</span> is the rolling baseline average, and <span className="font-bold text-slate-300 font-serif">σ (sigma)</span> represents standard deviation. Values beyond the threshold (e.g. Z &gt; 2.8) represent an anomaly.
+                  Where <span className="font-bold text-slate-700">x</span> represents live metric load, <span className="font-bold text-slate-700">μ (mean)</span> is the baseline rolling average, and <span className="font-bold text-slate-700">σ (sigma)</span> is standard deviation. Scores beyond threshold Z trigger deviation flags.
                 </p>
               </div>
 
               <div>
-                <h4 className="text-xs font-bold text-slate-200 border-l-2 border-indigo-500 pl-2 uppercase">2. Dispersion Sigma standard deviation formula</h4>
-                <div className="bg-slate-950 border border-slate-900 p-2.5 rounded-md text-slate-350 select-all my-1.5 flex justify-center text-xs">
+                <h4 className="text-xs font-bold text-slate-800 border-l-2 border-indigo-650 pl-2 uppercase">2. Standard Deviation Formula</h4>
+                <div className="bg-slate-50 border border-gray-150 p-2.5 rounded-lg text-slate-705 select-all my-1.5 flex justify-center text-xs font-mono">
                   σ = Math.sqrt( Σ(xi - μ)² / (N - 1) )
                 </div>
                 <p className="text-[11px] text-slate-500">
-                  Calculates baseline dispersion depth over <span className="font-bold text-slate-300">N (Window Size {settings.rollingWindowSize})</span> periods. An expanded dispersion factor prevents false classifications during volatile clusters.
+                  Measures variance across <span className="font-bold text-slate-700">N (Window size {settings.rollingWindowSize})</span> sample cycles. Natural variations expand baseline boundaries to limit false alarms.
                 </p>
               </div>
 
               <div>
-                <h4 className="text-xs font-bold text-slate-200 border-l-2 border-indigo-500 pl-2 uppercase">3. Alarm confidence scoring</h4>
-                <div className="p-2.5 bg-slate-950 rounded-md border border-slate-900 text-[11px] text-slate-500 space-y-1">
-                  <p>• <span className="text-slate-300 font-bold">Z-Score &lt; 2.8:</span> 0% alarm threshold index (Normal)</p>
-                  <p>• <span className="text-amber-400 font-bold">Z-Score ≈ 2.8:</span> 60% confidence baseline alarm (Medium)</p>
-                  <p>• <span className="text-red-400 font-bold">Z-Score &gt; 4.0:</span> 95%+ high confidence threat (Critical / High)</p>
+                <h4 className="text-xs font-bold text-slate-800 border-l-2 border-indigo-650 pl-2 uppercase">3. Alert Severity metrics limits</h4>
+                <div className="p-3 bg-slate-50 rounded-lg border border-gray-150 space-y-1.5 font-sans">
+                  <p className="text-xs text-slate-500 font-medium">• <span className="text-slate-700 font-bold block sm:inline">Z-Score &lt; 2.8:</span> 0% alarm threshold index (Normal range)</p>
+                  <p className="text-xs text-slate-500 font-medium">• <span className="text-amber-600 font-bold block sm:inline">Z-Score ≈ 2.8:</span> 60% confidence baseline alarm (Medium alert)</p>
+                  <p className="text-xs text-slate-500 font-medium">• <span className="text-red-650 font-bold block sm:inline">Z-Score &gt; 4.0:</span> 95% high confidence threshold reached (Critical severity)</p>
                 </div>
               </div>
 
@@ -225,28 +261,28 @@ export default function SettingsView({
           </div>
 
           {/* Security policy compliance display */}
-          <div className="bg-slate-900 border border-slate-850 p-5 rounded-lg space-y-4">
-            <h3 className="text-xs font-bold font-mono tracking-wider text-slate-100 uppercase border-b border-slate-850 pb-2 flex items-center space-x-2">
-              <Shield className="w-4 h-4 text-indigo-400" />
-              <span>SECURITY & ENFORCEMENT POLICIES</span>
+          <div className="bg-white border border-gray-200 p-5 rounded-xl shadow-sm space-y-4">
+            <h3 className="text-xs font-bold text-slate-805 uppercase border-b border-gray-100 pb-2 flex items-center space-x-2">
+              <Sliders className="w-4 h-4 text-indigo-650" />
+              <span>Policy & Encryption Mandates</span>
             </h3>
             
-            <div className="font-mono text-[11px] text-slate-500 space-y-2.5">
-              <div className="flex justify-between border-b border-slate-850/40 pb-2">
-                <span>PASSWORD STORAGE POLICY</span>
-                <span className="text-emerald-400 font-bold">PBKDF2-SHA512 CRYPTO</span>
+            <div className="text-[11px] font-bold text-slate-450 space-y-2.5 uppercase">
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span>Password digest encryption</span>
+                <span className="text-emerald-600">PBKDF2-SHA512</span>
               </div>
-              <div className="flex justify-between border-b border-slate-850/40 pb-2">
-                <span>SESSION SECURITY</span>
-                <span className="text-emerald-400 font-bold">64-CHAR HEX ACCESS TICKETS</span>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span>Access tickets authentication</span>
+                <span className="text-emerald-600">Secure Cryptographic Token</span>
               </div>
-              <div className="flex justify-between border-b border-slate-850/40 pb-2">
-                <span>ROLE-BASED AUTHORIZATION</span>
-                <span className="text-slate-300 font-bold">ENFORCED ENTIRE ENDPOINTS</span>
+              <div className="flex justify-between border-b border-gray-100 pb-2">
+                <span>Scope-based access limits</span>
+                <span className="text-indigo-600">Enforced administratively</span>
               </div>
               <div className="flex justify-between pb-1">
-                <span>IDLE SESSION LOCKS</span>
-                <span className="text-amber-400 font-bold">10 MINS (MAX_IDLE)</span>
+                <span>Inactivity Session timeouts</span>
+                <span className="text-amber-600">10 MINUTES MAX IDLE</span>
               </div>
             </div>
           </div>

@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Shield, Eye, EyeOff, Lock, Mail, UserPlus, FileWarning, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Shield, Eye, EyeOff, Lock, Mail, UserPlus, FileWarning, ArrowRight, CheckCircle2, Link2, Wifi, Save } from 'lucide-react';
 import { UserRole } from '../types.js';
+import { secureFetch, getBackendUrl, setBackendUrl } from '../utils/api.js';
 
 interface LoginProps {
   onLoginSuccess: (token: string, user: any) => void;
@@ -22,6 +23,19 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  
+  // Operational backend bridge configuration states
+  const [backendInput, setBackendInput] = useState(getBackendUrl());
+  const [showBridgeConfig, setShowBridgeConfig] = useState(getBackendUrl() !== '');
+  const [bridgeSavedMsg, setBridgeSavedMsg] = useState('');
+
+  const handleSaveBridge = (e: React.FormEvent) => {
+    e.preventDefault();
+    setBackendUrl(backendInput);
+    setBridgeSavedMsg('Secure tunnel endpoint updated successfully!');
+    setTimeout(() => setBridgeSavedMsg(''), 3000);
+    setErrorMessage('');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +49,7 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await secureFetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -54,7 +68,13 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
         }, 1200);
       }
     } catch (err: any) {
-      setErrorMessage(`Tunnel connection error: ${err.message}`);
+      console.error(err);
+      if (err.message.includes('TUNNEL_HTML_ERROR') || err.message.includes('Unexpected token') || err.message.includes('is not valid JSON')) {
+        setErrorMessage(`Tunnel connection error: Your static runner (Vercel) cannot reach the Express API. Please configure your live Container Backend Tunnel at the bottom of this page.`);
+        setShowBridgeConfig(true);
+      } else {
+        setErrorMessage(`Tunnel connection error: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -77,7 +97,7 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await secureFetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -94,7 +114,7 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
         // Auto-login registered account immediately
         setTimeout(async () => {
           try {
-            const loginRes = await fetch('/api/auth/login', {
+            const loginRes = await secureFetch('/api/auth/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email, password })
@@ -114,47 +134,49 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
         }, 1500);
       }
     } catch (err: any) {
-      setErrorMessage(`Tunnel connection error: ${err.message}`);
+      console.error(err);
+      if (err.message.includes('TUNNEL_HTML_ERROR') || err.message.includes('Unexpected token') || err.message.includes('is not valid JSON')) {
+        setErrorMessage(`Tunnel connection error: Your static runner (Vercel) cannot reach the Express API. Please configure your live Container Backend Tunnel at the bottom of this page.`);
+        setShowBridgeConfig(true);
+      } else {
+        setErrorMessage(`Tunnel connection error: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div id="login-container" className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+    <div id="login-container" className="min-h-screen bg-[#f3f4f6]/60 flex flex-col items-center justify-center p-4 font-sans relative">
       
-      {/* Visual glowing geometric background grids */}
-      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-indigo-500/5 blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] rounded-full bg-red-500/5 blur-[120px] pointer-events-none"></div>
-
       {/* Main card */}
-      <div className="w-full max-w-md bg-slate-900/40 border border-slate-850 p-6 sm:p-8 rounded-xl shadow-2xl relative overflow-hidden">
+      <div className="w-full max-w-md bg-white border border-gray-250/90 p-6 sm:p-8 rounded-xl shadow-xl relative overflow-hidden">
         
         {/* Header decoration logo and security banner */}
-        <div className="flex flex-col items-center space-y-2 mb-8 text-center">
-          <div className="p-3 bg-red-600/10 border border-red-500/20 rounded-lg shadow-inner">
-            <Shield className="w-6 h-6 text-red-500 animate-pulse" />
+        <div className="flex flex-col items-center space-y-2 mb-6 text-center">
+          <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-lg shadow-sm">
+            <Shield className="w-6 h-6 text-indigo-600 animate-pulse" />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-wider text-slate-100 font-mono uppercase">
-              Anomaly.Stream Security Tunnel
+            <h1 className="text-xl font-bold tracking-tight text-slate-800">
+              Telemetry Monitor Portal
             </h1>
-            <p className="text-[11px] text-slate-500 font-mono mt-1 uppercase">
-              DEVIATIONS TRACKING PORTAL • ROLE ACCESS ACTIVE
+            <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider font-semibold">
+              Live Service Observability Platform
             </p>
           </div>
         </div>
 
         {/* Dynamic error/success banner alerts */}
         {errorMessage && (
-          <div id="banner-login-error" className="mb-4 p-3 rounded bg-red-500/10 text-red-400 border border-red-500/20 text-xs font-mono flex items-start space-x-2 animate-in slide-in-from-top-1 duration-150">
-            <FileWarning className="w-4 h-4 shrink-0 mt-0.5" />
+          <div id="banner-login-error" className="mb-4 p-3 rounded bg-red-50 text-red-700 border border-red-200/60 text-xs font-sans flex items-start space-x-2 animate-in slide-in-from-top-1 duration-150">
+            <FileWarning className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
             <span>{errorMessage}</span>
           </div>
         )}
         {successMsg && (
-          <div id="banner-login-success" className="mb-4 p-3 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-mono flex items-start space-x-2 animate-in slide-in-from-top-1 duration-150">
-            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
+          <div id="banner-login-success" className="mb-4 p-3 rounded bg-emerald-50 text-emerald-800 border border-emerald-200/60 text-xs font-sans flex items-start space-x-2 animate-in slide-in-from-top-1 duration-150">
+            <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600" />
             <span>{successMsg}</span>
           </div>
         )}
@@ -164,49 +186,49 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
           
           {isRegistering && (
             <div className="space-y-1">
-              <label htmlFor="reg-name-input" className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase block">Operator full name</label>
+              <label htmlFor="reg-name-input" className="text-[11px] text-slate-700 font-semibold tracking-wide uppercase block">Full Name</label>
               <input
                 id="reg-name-input"
                 type="text"
                 placeholder="Jane Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 text-slate-200 placeholder:text-slate-700 p-2.5 rounded text-xs focus:outline-none focus:border-red-500 font-mono"
+                className="w-full bg-white border border-gray-200 text-slate-800 placeholder:text-gray-400 p-2.5 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-sans"
               />
             </div>
           )}
 
           <div className="space-y-1">
-            <label htmlFor="auth-email-input" className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase block">Corporate email address</label>
+            <label htmlFor="auth-email-input" className="text-[11px] text-slate-700 font-semibold tracking-wide uppercase block">Email Address</label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-700 absolute left-3.5 top-3.5" />
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
               <input
                 id="auth-email-input"
                 type="email"
-                placeholder="operator@anomaly.io"
+                placeholder="developer@company.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 pl-10 pr-3 py-3 text-slate-200 placeholder:text-slate-700 rounded text-xs focus:outline-none focus:border-red-500 font-mono"
+                className="w-full bg-white border border-gray-200 pl-9 pr-3 py-3 text-slate-800 placeholder:text-gray-400 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-sans animate-none"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label htmlFor="auth-pass-input" className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase block">Secure passcode credentials</label>
+            <label htmlFor="auth-pass-input" className="text-[11px] text-slate-700 font-semibold tracking-wide uppercase block">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-700 absolute left-3.5 top-3.5" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
               <input
                 id="auth-pass-input"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 pl-10 pr-10 py-3 text-slate-200 placeholder:text-slate-700 rounded text-xs focus:outline-none focus:border-red-500 font-mono"
+                className="w-full bg-white border border-gray-200 pl-9 pr-10 py-3 text-slate-800 placeholder:text-gray-400 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-sans"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-3 px-1 text-slate-600 hover:text-slate-400 cursor-pointer"
+                className="absolute right-3.5 top-3 px-1 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -215,12 +237,12 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
 
           {isRegistering && (
             <div className="space-y-1">
-              <label htmlFor="select-reg-role" className="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase block">Assigned Security Role (For evaluation)</label>
+              <label htmlFor="select-reg-role" className="text-[11px] text-slate-700 font-semibold tracking-wide uppercase block">Assigned Account Role</label>
               <select
                 id="select-reg-role"
                 value={role}
                 onChange={(e) => setRole(e.target.value as UserRole)}
-                className="w-full bg-slate-950 border border-slate-800 text-slate-200 p-2.5 rounded text-xs focus:outline-none focus:border-red-500 font-mono select-none cursor-pointer"
+                className="w-full bg-white border border-gray-200 text-slate-800 p-2.5 rounded text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 font-sans select-none cursor-pointer"
               >
                 <option value="Viewer">Viewer (Dashboard logs read-only)</option>
                 <option value="Operator">Operator (Triage alarms, inject stress)</option>
@@ -233,27 +255,102 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
             type="submit"
             id="btn-auth-submit"
             disabled={loading}
-            className="w-full py-3 bg-red-600 hover:bg-red-500 font-bold font-mono text-white duration-150 rounded text-xs uppercase flex items-center justify-center space-x-2 tracking-wider cursor-pointer mt-2 disabled:opacity-40"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 font-semibold text-white duration-150 rounded text-xs uppercase flex items-center justify-center space-x-2 tracking-wider cursor-pointer mt-2 disabled:opacity-40"
           >
-            <span>{loading ? 'Evaluating security tunnel...' : isRegistering ? 'Register & Establish Session' : 'Authenticate Security Session'}</span>
-            {!loading && <ArrowRight className="w-4 h-4 text-slate-100" />}
+            <span>{loading ? 'Verifying authentication...' : isRegistering ? 'Register Account' : 'Authenticate Credentials'}</span>
+            {!loading && <ArrowRight className="w-4 h-4 text-white" />}
           </button>
 
         </form>
 
         {/* Pivot button to register/login */}
-        <div className="mt-5 text-center text-xs">
+        <div className="mt-5 text-center text-xs flex flex-col items-center space-y-3">
           <button
+            type="button"
             onClick={() => {
               setIsRegistering(!isRegistering);
               setErrorMessage('');
               setSuccessMsg('');
             }}
-            className="text-slate-400 hover:text-indigo-400 font-semibold cursor-pointer duration-150"
+            className="text-slate-550 text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer duration-150"
           >
-            {isRegistering ? 'Have credentials? Back to Secure Authentication' : 'Request Security Credentials'}
+            {isRegistering ? 'Have account credentials? Sign In' : 'Request Security Credentials'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowBridgeConfig(!showBridgeConfig)}
+            className="text-[11px] text-slate-400 hover:text-slate-600 font-medium flex items-center space-x-1 duration-150 cursor-pointer"
+          >
+            <Link2 className="w-3.5 h-3.5" />
+            <span>{showBridgeConfig ? 'Hide Backend Tunnel settings' : 'Configure Backend Tunnel'}</span>
           </button>
         </div>
+
+        {/* Operational Bridge Settings Card */}
+        {showBridgeConfig && (
+          <div className="mt-6 pt-5 border-t border-gray-200 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div className="rounded-lg bg-slate-50 border border-gray-200 p-3.5 space-y-3">
+              <div className="flex items-center space-x-2 text-indigo-700">
+                <Wifi className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+                <h4 className="text-[11px] uppercase font-bold tracking-wider text-indigo-700">
+                  Backend Link Tunnel
+                </h4>
+              </div>
+              
+              <p className="text-[10px] text-slate-550 leading-relaxed font-sans">
+                Enter your <strong>Live Container URL</strong> (Development or Shared play view URL) from AI Studio below to bind this interface directly with your mock-free Express telemetry backend.
+              </p>
+
+              {bridgeSavedMsg && (
+                <div className="p-1 px-2 rounded bg-emerald-50 border border-emerald-200 text-[10px] text-emerald-800 text-center">
+                  {bridgeSavedMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveBridge} className="space-y-2">
+                <div className="space-y-1">
+                  <label htmlFor="input-backend-url" className="text-[9px] font-bold text-slate-500 block uppercase">
+                    Active Container URL
+                  </label>
+                  <input
+                    id="input-backend-url"
+                    type="url"
+                    placeholder="https://ais-pre-...asia-southeast1.run.app"
+                    value={backendInput}
+                    onChange={(e) => setBackendInput(e.target.value)}
+                    className="w-full bg-white border border-gray-250 rounded p-2 text-[10px] text-slate-700 placeholder:text-gray-300 font-sans focus:outline-none focus:border-indigo-500"
+                  />
+                  <div className="text-[9px] text-slate-500 font-sans flex flex-col space-y-0.5 mt-1 leading-normal select-text">
+                    <span>Example: Go to AI Studio, copy your Development or Shared App URL and paste it here.</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-1.5 border-t border-gray-150">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBackendUrl('');
+                      setBackendInput('');
+                      setBridgeSavedMsg('Reset to relative origin endpoints.');
+                      setTimeout(() => setBridgeSavedMsg(''), 3000);
+                    }}
+                    className="text-[10px] text-slate-400 hover:text-red-600 duration-150 cursor-pointer"
+                  >
+                    Clear Override
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[10px] font-sans flex items-center space-x-1 duration-150 cursor-pointer"
+                  >
+                    <Save className="w-3" />
+                    <span>Save Endpoint</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
       </div>
 

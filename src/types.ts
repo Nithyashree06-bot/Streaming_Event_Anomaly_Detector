@@ -78,6 +78,7 @@ export interface SystemSettings {
   autoResolveDurationMin: number; // automatically resolve after some mins
   authPasscodeMinLength: number;
   maxSessionIdleMs: number;
+  manualModeOnly?: boolean;
 }
 
 export interface DashboardMetrics {
