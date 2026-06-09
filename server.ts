@@ -1121,7 +1121,7 @@ Keep the tone expert, analytical, highly descriptive, and structured like profes
     const model = 'gemini-3.5-flash';
     const response = await ai.models.generateContent({
       model: model,
-      contents: [systemContext],
+      contents: systemContext,
     });
 
     res.json({

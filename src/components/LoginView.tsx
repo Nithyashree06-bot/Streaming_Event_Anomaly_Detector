@@ -23,20 +23,6 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Built-in credential seeds for quick testing access
-  const defaultSeeds = [
-    { email: 'admin@anomaly.io', pass: 'admin123', label: 'Admin (Complete Access)', color: 'border-red-500/25 text-red-400' },
-    { email: 'operator@anomaly.io', pass: 'operator123', label: 'Operator (Triage & Simulation)', color: 'border-amber-500/25 text-amber-400' },
-    { email: 'viewer@anomaly.io', pass: 'viewer123', label: 'Viewer (Read-Only)', color: 'border-emerald-500/25 text-emerald-400' }
-  ];
-
-  const handleApplySeed = (seedMail: string, seedPass: string) => {
-    setEmail(seedMail);
-    setPassword(seedPass);
-    setErrorMessage('');
-    setSuccessMsg('');
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -268,30 +254,6 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
             {isRegistering ? 'Have credentials? Back to Secure Authentication' : 'Request Security Credentials'}
           </button>
         </div>
-
-        {/* Bottom micro credentials directory seed helpful panel */}
-        {!isRegistering && (
-          <div className="mt-8 border-t border-slate-850/60 pt-5 space-y-3.5">
-            <h5 className="text-[9px] font-mono font-bold text-slate-500 uppercase tracking-widest text-center">
-              Seeded Evaluation Operator Logs
-            </h5>
-            <div className="space-y-2">
-              {defaultSeeds.map(seed => (
-                <div 
-                  key={seed.email}
-                  onClick={() => handleApplySeed(seed.email, seed.pass)}
-                  className={`p-2 bg-slate-950/50 hover:bg-slate-950 border rounded-md cursor-pointer duration-100 flex justify-between items-center text-[10px] font-mono ${seed.color}`}
-                >
-                  <div className="text-left font-sans text-[11px]">
-                    <p className="font-semibold">{seed.label}</p>
-                    <p className="text-[10px] font-mono text-slate-500 mt-0.5">{seed.email} / {seed.pass}</p>
-                  </div>
-                  <UserPlus className="w-3.5 h-3.5 opacity-60" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
       </div>
 
