@@ -46,13 +46,19 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
   const [successMsg, setSuccessMsg] = useState('');
   
   // Operational backend bridge configuration states
-  const [backendInput, setBackendInput] = useState(getBackendUrl());
-  const [showBridgeConfig, setShowBridgeConfig] = useState(getBackendUrl() !== '' || errorMessage.includes('Tunnel'));
+  const [backendInput, setBackendInput] = useState(localStorage.getItem('anomaly_backend_url') || '');
+  const [showBridgeConfig, setShowBridgeConfig] = useState((getBackendUrl() !== '') || errorMessage.includes('Tunnel'));
   const [bridgeSavedMsg, setBridgeSavedMsg] = useState('');
 
   const handleSaveBridge = (e: React.FormEvent) => {
     e.preventDefault();
-    setBackendUrl(backendInput);
+    const inputCleaned = backendInput.trim();
+    if (inputCleaned.includes('...') || inputCleaned.includes('…')) {
+      setErrorMessage('Validation Failure: The URL entered is truncated with "..." ellipses. Please copy the complete, non-truncated Development or Shared App URL from AI Studio.');
+      setBridgeSavedMsg('');
+      return;
+    }
+    setBackendUrl(inputCleaned || null);
     setBridgeSavedMsg('Secure tunnel endpoint updated successfully!');
     setTimeout(() => setBridgeSavedMsg(''), 3000);
     setErrorMessage('');
@@ -411,14 +417,30 @@ export default function LoginView({ onLoginSuccess }: LoginProps) {
                     Backend Link Tunnel
                   </h4>
                 </div>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold ${getBackendUrl() ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' : 'bg-slate-850 text-slate-400 border border-slate-800'}`}>
-                  {getBackendUrl() ? 'OVERRIDE BRIDGE SET' : 'DEFAULT ORIGIN'}
+                <span className={`text-[9px] px-1.5 py-0.5 rounded font-extrabold ${
+                  localStorage.getItem('anomaly_backend_url')?.includes('...') 
+                    ? 'bg-red-950 text-red-400 border border-red-900 animate-pulse'
+                    : getBackendUrl() 
+                      ? 'bg-emerald-950 text-emerald-400 border border-emerald-900' 
+                      : 'bg-slate-850 text-slate-400 border border-slate-800'
+                }`}>
+                  {localStorage.getItem('anomaly_backend_url')?.includes('...') 
+                    ? 'INVALID OVERRIDE (TRUNCATED)' 
+                    : getBackendUrl() 
+                      ? 'OVERRIDE BRIDGE ACTIVE' 
+                      : 'DEFAULT RELATIVE ORIGIN'}
                 </span>
               </div>
               
               <p className="text-[11px] text-slate-400 leading-relaxed font-sans">
-                By default, this React interface queries the hosting origin. If you loaded this site onto a separate hosting tier, paste the live Express backend URL (Development App or Shared App page) below to bridge inputs.
+                By default, this React interface queries its hosting origin. If you are already inside AI Studio, you <strong>do not need any tunnel settings</strong>—just click <strong>Clear Override</strong> below to reset to the default direct link. Only paste a complete, continuous URL if you are running this panel on a separate custom domain.
               </p>
+
+              {localStorage.getItem('anomaly_backend_url')?.includes('...') && (
+                <div className="p-3 rounded bg-red-950/40 border border-red-900 text-[10px] text-red-200 leading-relaxed font-sans">
+                  ⚠️ <strong>Truncated URL Detected:</strong> The stored backend link contains ellipses <code>"..."</code>. This breaks connection requests. Please click <strong>Clear Override</strong> below to restore normal functionality!
+                </div>
+              )}
 
               {bridgeSavedMsg && (
                 <div className="p-2 rounded bg-emerald-950/40 border border-emerald-900 text-[10px] text-emerald-300 text-center animate-in zoom-in-95 duration-150">

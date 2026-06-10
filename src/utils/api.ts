@@ -10,8 +10,13 @@
 export function getBackendUrl(): string {
   const customUrl = localStorage.getItem('anomaly_backend_url');
   if (customUrl) {
+    const trimmed = customUrl.trim();
+    // Automatically filter out truncated URLs (often from copypasting play UI previews)
+    if (trimmed.includes('...') || trimmed.includes('…')) {
+      return '';
+    }
     // Remove any trailing slash to ensure clean joining
-    return customUrl.trim().replace(/\/$/, '');
+    return trimmed.replace(/\/$/, '');
   }
   return '';
 }
