@@ -7,7 +7,6 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import { 
   User, 
@@ -24,7 +23,7 @@ import {
 } from './src/types.js';
 
 const app = express();
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = 3000;
 
 app.use(express.json());
 
@@ -1452,6 +1451,7 @@ app.get('/api/documents/:id/download', requireAuth(), (req, res) => {
 // Express + Vite Frontend Bundle Hosting
 const bootServer = async () => {
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

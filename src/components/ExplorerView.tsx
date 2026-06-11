@@ -335,7 +335,7 @@ export default function ExplorerView({
 
                         {/* Mitigation description note */}
                         <div className="space-y-1.5">
-                          <label className="text-[11px] font-bold text-slate-550 uppercase">Analysis / SOP Action notes</label>
+                          <label className="text-[11px] font-bold text-slate-550 uppercase">Analysis / Action notes</label>
                           <textarea
                              id={`textarea-notes-${anom.id}`}
                             value={customNote}

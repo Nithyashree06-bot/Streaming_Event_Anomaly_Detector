@@ -41,7 +41,6 @@ export default function Sidebar({ currentTab, setCurrentTab, currentUser, onLogo
     { id: 'explorer', name: 'Telemetry Logs', icon: Database, limit: [] },
     { id: 'alerts', name: 'Alerts & Incidents', icon: AlertTriangle, limit: [] },
     { id: 'analytics', name: 'System Reports', icon: Brain, limit: [] },
-    { id: 'documents', name: 'SOP Documentation', icon: FileText, limit: [] },
     { id: 'users', name: 'Identity & Access', icon: Users, limit: ['Admin'] },
     { id: 'security', name: 'System Audit Logs', icon: ShieldAlert, limit: [] },
     { id: 'settings', name: 'System Settings', icon: Settings, limit: [] },

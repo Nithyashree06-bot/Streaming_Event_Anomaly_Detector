@@ -153,7 +153,7 @@ export default function AnalyticsView({
               <div>
                 <p className="text-xs font-bold text-slate-700 uppercase">Report Compiler Standby</p>
                 <p className="text-[11px] text-slate-450 mt-1 max-w-md">
-                  Click 'Compile System Report' to build standard multi-metric logs, trace recent deviation clusters, and generate structural SOP mitigation workflows.
+                  Click 'Compile System Report' to build standard multi-metric logs, trace recent deviation clusters, and generate structural incident mitigation workflows.
                 </p>
               </div>
             </div>

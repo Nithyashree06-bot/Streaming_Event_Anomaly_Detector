@@ -1,365 +1,94 @@
-# 🚀 Streaming Event Anomaly Detector
+# Streaming Event Anomaly Detector
 
-A real-time monitoring and anomaly detection platform that continuously analyzes streaming events, detects unusual behavior using statistical techniques, and leverages Google Gemini AI to provide intelligent root-cause analysis and mitigation recommendations.
-
----
-
-## 🌐 Live Demo
-
-🔗 **Deployed Application**
-https://streaming-event-anomaly-detector-1.onrender.com
+A high-performance full-stack dashboard for real-time stream monitoring, statistical anomaly detection, secure role-based access control (RBAC), and Gemini-powered alert analysis.
 
 ---
 
-## 📖 Overview
+## 🚀 Key Features
 
-Modern applications generate thousands of events every second. Detecting anomalies manually is difficult and often leads to delayed responses and operational issues.
-
-The **Streaming Event Anomaly Detector** addresses this challenge by monitoring event streams in real time, identifying abnormal patterns, generating alerts, and providing AI-powered analysis to help users understand and resolve incidents quickly.
-
-The platform combines real-time event monitoring, statistical anomaly detection, role-based access control, analytics dashboards, and automated reporting into a single user-friendly interface.
-
----
-
-## ✨ Features
-
-### 📊 Real-Time Event Monitoring
-
-* Live event stream simulation
-* Continuous event tracking
-* Real-time metrics updates
-* Dynamic performance visualization
-
-### 🚨 Anomaly Detection
-
-* Statistical threshold-based detection
-* Spike detection
-* Drop detection
-* Running average monitoring
-* Variance and trend analysis
-
-### 🤖 AI-Powered Root Cause Analysis
-
-* Google Gemini integration
-* Automated anomaly explanation
-* Root-cause identification
-* Actionable recommendations
-* Intelligent alert investigation
-
-### 👥 Role-Based Access Control (RBAC)
-
-* Admin role management
-* Analyst access
-* Operator access
-* Secure user authentication
-* Permission-based actions
-
-### 📈 Analytics Dashboard
-
-* Interactive charts
-* Event trend visualization
-* Performance monitoring
-* Historical analysis
-* System health indicators
-
-### 🔍 Stream Explorer
-
-* Event searching
-* Filtering capabilities
-* Historical log analysis
-* Deep-dive investigation tools
-
-### 📄 PDF Report Generation
-
-* Automated report creation
-* Incident summaries
-* Performance audits
-* Downloadable PDF reports
-
----
-
-## 🏗️ System Architecture
-
-```text
-User Interface (React + TypeScript)
-                │
-                ▼
-        Express Backend API
-                │
-                ▼
-      Anomaly Detection Engine
-                │
-                ▼
-         Google Gemini AI
-                │
-                ▼
-      Alerts • Analysis • Reports
-```
+*   **Real-Time Data Streaming Simulation**: Simulates dynamic event streams with customizable frequency, noise, and seasonal spikes.
+*   **Statistical Anomaly Detection**: Employs real-time threshold-based and statistical variance models (Z-score, running standard deviations) to flag stream spikes and drops immediately.
+*   **Gemini-Powered Alert Analysis**: Integrates the state-of-the-art `@google/genai` SDK to examine logs, diagnose root causes, and recommend mitigation steps for active alerts.
+*   **Role-Based Access Control (RBAC)**: Secure multi-user login with granular permissions (Admin, Operator, Analyst) managing stream toggling, user directories, and system thresholds.
+*   **Interactive Analytics Dashboard**: Interactive graphs and real-time visualization widgets demonstrating stream rates, error margins, latencies, and anomaly frequencies.
+*   **Interactive Stream Explorer**: Deep dive into historic metrics, filters, search tools, and log export interfaces.
+*   **PDF Analytical Resource Generator**: On-the-fly PDF creation via `pdfkit` for generating comprehensive performance audits, operational summaries, and incident reports.
 
 ---
 
 ## 🛠️ Technology Stack
 
-### Frontend
-
-* React 19
-* TypeScript
-* Vite
-* Tailwind CSS
-* Lucide React
-* Motion
-
-### Backend
-
-* Node.js
-* Express.js
-* ESBuild
-
-### AI Integration
-
-* Google Gemini API (`@google/genai`)
-
-### Reporting
-
-* PDFKit
-
-### Deployment
-
-* Render
+*   **Frontend**: React (v19), TypeScript, Tailwind CSS, Lucide Icons, Framer Motion (for polished transition animations)
+*   **Backend**: Node.js, Express (v4), ESBuild (optimized bundler for production server hosting)
+*   **AI Engine**: `@google/genai` Google GenAI SDK (Server-Side)
+*   **Document Generation**: `pdfkit` PDF engine
 
 ---
 
 ## 📂 Project Structure
 
 ```text
-.
 ├── src/
-│   ├── components/
-│   │   ├── AlertsCenter.tsx
-│   │   ├── AnalyticsView.tsx
-│   │   ├── DashboardView.tsx
-│   │   ├── DocumentsView.tsx
-│   │   ├── ExplorerView.tsx
-│   │   ├── LoginView.tsx
-│   │   ├── MonitorView.tsx
-│   │   ├── SettingsView.tsx
-│   │   ├── Sidebar.tsx
-│   │   └── UserManagement.tsx
-│   │
+│   ├── components/            # View-specific dashboards and widgets
+│   │   ├── AlertsCenter.tsx   # AI-powered alerts log and deep analysis center
+│   │   ├── AnalyticsView.tsx  # Metrics graphs and statistical visualizations
+│   │   ├── DashboardView.tsx  # Primary real-time stream operational console
+│   │   ├── DocumentsView.tsx  # PDF report generators & audit export console
+│   │   ├── ExplorerView.tsx   # Historical query filters and log analytics 
+│   │   ├── LoginView.tsx      # Secure custom multi-role authentication gate
+│   │   ├── MonitorView.tsx    # Live metrics, latency gauges, and active logs
+│   │   ├── SettingsView.tsx   # Access control thresholds & stream tuning
+│   │   ├── Sidebar.tsx        # Responsive navigation and system statistics
+│   │   └── UserManagement.tsx # Admin control panel for team accounts
 │   ├── utils/
-│   │   └── api.ts
-│   │
-│   ├── App.tsx
-│   ├── main.tsx
-│   ├── index.css
-│   └── types.ts
-│
-├── server.ts
-├── generate-pdfs.ts
-├── anomaly_detector_db.json
-├── metadata.json
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
+│   │   └── api.ts             # Server proxy routes, state synchronizers
+│   ├── App.tsx                # Main state controller and router
+│   ├── index.css              # Global styling via Tailwind CSS directives
+│   ├── main.tsx               # Frontend client entry-point
+│   └── types.ts               # Shared models, types, and interfaces
+├── server.ts                  # Production full-stack Express & local JSON engine
+├── anomaly_detector_db.json   # Flat-file database for local persistence
+├── generate-pdfs.ts           # PDFKit report generation functions
+├── metadata.json              # Applet permission and capabilities configuration
+└── package.json               # Manifest dependencies & run scripts
 ```
 
 ---
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in the project root:
+To leverage the server-side AI root-cause analysis, configure the following environment variable by creating a `.env` file at your project's root:
 
 ```env
-GEMINI_API_KEY=your_google_gemini_api_key
-PORT=3000
+# Google Gemini API Key (Secret Key - stays on server)
+GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ---
 
-## 🚀 Installation
+## 🏃 Getting Started
 
-### Clone the Repository
-
-```bash
-git clone https://github.com/your-username/streaming-event-anomaly-detector.git
-cd streaming-event-anomaly-detector
-```
-
-### Install Dependencies
-
+### 1. Installation
+Install all dependencies for both development and production environments:
 ```bash
 npm install
 ```
 
----
-
-## 💻 Running the Application
-
-### Development Mode
-
-Start the development server:
-
+### 2. Run the Development Server
+Fires up the hot-reloading development server powered by `tsx` (TypeScript Executor) and Vite:
 ```bash
 npm run dev
 ```
+Open your browser to `http://localhost:3000` to interact with the application.
 
-Open:
-
-```text
-http://localhost:3000
-```
-
----
-
-### Production Build
-
-Build the frontend and backend:
-
+### 3. Production Compilation & Optimization
+Bundles the frontend using Vite and bundles the Node.js backend using ESBuild into a highly-performant production artifact inside `dist/`:
 ```bash
 npm run build
 ```
 
----
-
-### Start Production Server
-
+### 4. Running Production Server
+Starts the built, self-contained CommonJS backend routing client requests and hosting assets perfectly:
 ```bash
-npm start
+npm run start
 ```
-
----
-
-## 🌍 Deployment
-
-The application is deployed on Render.
-
-### Build Command
-
-```bash
-npm install && npm run build
-```
-
-### Start Command
-
-```bash
-npm start
-```
-
-### Required Environment Variables
-
-```env
-NODE_ENV=production
-GEMINI_API_KEY=your_google_gemini_api_key
-```
-
----
-
-## 🎯 Use Cases
-
-* Real-Time Event Monitoring
-* Operational Intelligence
-* Infrastructure Monitoring
-* Application Health Tracking
-* AI-Assisted Incident Investigation
-* Stream Processing Analytics
-* Performance Monitoring Systems
-
----
-
-## 🔒 Security Features
-
-* Role-Based Access Control
-* Secure Authentication
-* Protected Administrative Actions
-* Server-Side AI Processing
-* Controlled User Permissions
-
----
-
-## 📸 Dashboard Modules
-
-### Dashboard
-
-Provides a real-time overview of event streams and system health.
-
-### Alert Center
-
-Displays detected anomalies and AI-generated insights.
-
-### Analytics
-
-Visualizes trends, metrics, and performance statistics.
-
-### Stream Explorer
-
-Allows users to search and investigate historical data.
-
-### User Management
-
-Administrative controls for managing users and permissions.
-
-### Settings
-
-Configuration options for anomaly thresholds and monitoring parameters.
-
-### Documents
-
-Generate downloadable PDF reports and audits.
-
----
-
-## 🧠 Anomaly Detection Workflow
-
-1. Events are generated or received.
-2. The monitoring engine calculates statistical metrics.
-3. Abnormal spikes or drops are detected.
-4. Alerts are generated instantly.
-5. Gemini AI analyzes the anomaly.
-6. Root-cause explanations and recommendations are displayed.
-7. Reports can be exported as PDFs.
-
----
-
-## 👨‍💻 Project Highlights
-
-* Real-time event monitoring platform
-* Statistical anomaly detection engine
-* Google Gemini AI integration
-* Interactive analytics dashboard
-* Secure RBAC implementation
-* Automated PDF report generation
-* Cloud deployment using Render
-
----
-
-## 📚 Future Enhancements
-
-* Real-time WebSocket streaming
-* Email and SMS notifications
-* Multi-tenant architecture
-* Advanced machine learning models
-* Database integration
-* Custom anomaly detection rules
-* Mobile application support
-
----
-
-## 📜 License
-
-This project is developed for educational, research, and demonstration purposes.
-
----
-
-## 👥 Team Project
-
-Streaming Event Anomaly Detector demonstrates modern full-stack development practices by combining:
-
-* Real-Time Data Processing
-* AI-Powered Analysis
-* Secure User Management
-* Interactive Dashboards
-* Cloud Deployment
-* Automated Reporting
-
-Designed and developed as a scalable, production-ready monitoring solution.
